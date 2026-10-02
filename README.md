@@ -152,22 +152,22 @@ uv run uvicorn server:app --host 127.0.0.1 --port 8000
 다른 Bash 터미널에서 고객 문의 분류를 요청합니다.
 
 ```bash
-curl --fail-with-body http://127.0.0.1:8000/v1/systemone  \
- -H 'Authorization: Bearer your-local-key'  \
- -H 'Content-Type: application/json; charset=utf-8'  \
- --data-raw '{
-    "model": "jev-latest",
+curl --fail-with-body http://127.0.0.1:8000/v1/systemone \
+  -H 'Authorization: Bearer your-local-key' \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  --data-raw '{
+    "model": "laya-korean-support",
     "state": "두 번 결제됐어요. 한 건 취소해주세요.",
     "questions": {
       "category": {
         "type": "choice",
-        "instructions": "고객 문의의 주된 요청을 가장 적합한 유형 하나로 분류하세요.",
+        "instructions": "고객 문의의 주된 요청을 가장 적합한 유형 하나로 분류하세요. 결제나 환불 요청은 결제·환불, 인증이나 계정 접근은 계정·로그인, 프로그램의 고장이나 오류는 기술 문제, 기능·요금제·이용 방법 질문은 상품·서비스입니다. 어느 유형에도 해당하지 않거나 판단할 정보가 부족하면 기타입니다.",
         "criteria": {
-          "billing": "결제·환불",
-          "account": "계정·로그인",
-          "technical": "기술 문제",
-          "product": "상품·서비스",
-          "other": "기타"
+          "billing": "결제·환불: 중복 청구, 결제 실패, 환불, 결제 취소, 영수증",
+          "account": "계정·로그인: 로그인, 비밀번호, 인증, 계정 접근, 회원 탈퇴",
+          "technical": "기술 문제: 앱 종료, 화면 오류, 기능 고장, 서비스 접속 오류",
+          "product": "상품·서비스: 기능 안내, 요금제 비교, 이용 방법, 지원 범위",
+          "other": "기타: 제휴, 채용, 일반 의견, 분류 정보 부족"
         }
       }
     }

@@ -1,0 +1,40 @@
+{"id": "demo-billing-01", "text": "같은 주문이 두 번 결제됐어요. 한 건 취소해주세요.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-02", "text": "구독을 취소했는데 이번 달 요금이 청구됐습니다. 환불 부탁드려요.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-03", "text": "카드로 결제하면 승인 실패라고 나와요.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-04", "text": "지난달 결제 영수증을 받고 싶습니다.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-05", "text": "결제한 금액과 안내된 가격이 다릅니다. 확인해주세요.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-06", "text": "환불 신청한 금액이 아직 입금되지 않았어요.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-07", "text": "카드 한도가 충분한데 결제가 거절됩니다.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-08", "text": "서비스를 사용하지 않았는데 자동 결제됐어요. 취소해주세요.", "label": "billing", "synthetic": true}
+{"id": "demo-account-01", "text": "비밀번호를 잊어버렸어요. 재설정하고 싶습니다.", "label": "account", "synthetic": true}
+{"id": "demo-account-02", "text": "인증 메일이 오지 않아 가입을 완료할 수 없어요.", "label": "account", "synthetic": true}
+{"id": "demo-account-03", "text": "휴대폰을 바꿨는데 이중 인증 때문에 로그인할 수 없습니다.", "label": "account", "synthetic": true}
+{"id": "demo-account-04", "text": "회원 탈퇴를 신청하려고 합니다.", "label": "account", "synthetic": true}
+{"id": "demo-account-05", "text": "비밀번호가 맞는데 로그인이 안 돼요.", "label": "account", "synthetic": true}
+{"id": "demo-account-06", "text": "제 계정이 잠겼습니다. 잠금 해제 부탁드립니다.", "label": "account", "synthetic": true}
+{"id": "demo-account-07", "text": "로그인에 사용하는 이메일 주소를 변경하고 싶어요.", "label": "account", "synthetic": true}
+{"id": "demo-account-08", "text": "소셜 로그인 계정을 기존 계정과 연결하고 싶습니다.", "label": "account", "synthetic": true}
+{"id": "demo-technical-01", "text": "앱을 실행하자마자 종료됩니다.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-02", "text": "파일 업로드가 50퍼센트에서 멈춥니다.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-03", "text": "검색 버튼을 눌러도 아무 반응이 없어요.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-04", "text": "화면에 500 오류가 표시됩니다.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-05", "text": "업데이트 이후 알림 기능이 작동하지 않습니다.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-06", "text": "저장 버튼을 눌렀는데 작성한 내용이 사라졌어요.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-07", "text": "동영상 재생 중 소리는 나오는데 화면이 검게 나옵니다.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-08", "text": "다운로드한 파일이 깨져서 열리지 않아요.", "label": "technical", "synthetic": true}
+{"id": "demo-product-01", "text": "무료 요금제에서도 파일 내보내기가 가능한가요?", "label": "product", "synthetic": true}
+{"id": "demo-product-02", "text": "팀 요금제와 개인 요금제의 차이가 궁금합니다.", "label": "product", "synthetic": true}
+{"id": "demo-product-03", "text": "서비스에서 지원하는 파일 형식을 알려주세요.", "label": "product", "synthetic": true}
+{"id": "demo-product-04", "text": "팀원을 초대하는 방법을 알려주세요.", "label": "product", "synthetic": true}
+{"id": "demo-product-05", "text": "모바일에서도 같은 기능을 이용할 수 있나요?", "label": "product", "synthetic": true}
+{"id": "demo-product-06", "text": "한 번에 올릴 수 있는 파일 크기 제한이 있나요?", "label": "product", "synthetic": true}
+{"id": "demo-product-07", "text": "기업용 요금제의 기능을 알고 싶습니다.", "label": "product", "synthetic": true}
+{"id": "demo-product-08", "text": "문서를 다른 사람과 공유하는 방법이 궁금해요.", "label": "product", "synthetic": true}
+{"id": "demo-other-01", "text": "귀사와 제휴를 논의하고 싶습니다.", "label": "other", "synthetic": true}
+{"id": "demo-other-02", "text": "현재 채용 중인 직무가 있나요?", "label": "other", "synthetic": true}
+{"id": "demo-other-03", "text": "담당자에게 인터뷰를 요청하고 싶습니다.", "label": "other", "synthetic": true}
+{"id": "demo-other-04", "text": "서비스 로고 색상이 마음에 들어요.", "label": "other", "synthetic": true}
+{"id": "demo-other-05", "text": "문의드립니다.", "label": "other", "synthetic": true}
+{"id": "demo-other-06", "text": "행사 후원 제안을 전달하고 싶어요.", "label": "other", "synthetic": true}
+{"id": "demo-other-07", "text": "오늘도 좋은 하루 보내세요.", "label": "other", "synthetic": true}
+{"id": "demo-other-08", "text": "마케팅 협업 담당자 연락처를 알고 싶습니다.", "label": "other", "synthetic": true}

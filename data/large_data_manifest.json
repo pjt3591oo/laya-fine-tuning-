@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "seed": 20261002,
+  "generation": "100 request templates, 10 contexts, 19 shared greeting/channel prefixes",
+  "warning": "Only 100 underlying request templates. Extra rows add wording combinations, not new intents. Keep template_group together when splitting data.",
+  "nested": "train_1000 subset of train_10000 subset of train_20000",
+  "datasets": {
+    "train_10000.jsonl": {
+      "rows": 10000,
+      "labels": {
+        "product": 2000,
+        "technical": 2000,
+        "other": 2000,
+        "account": 2000,
+        "billing": 2000
+      },
+      "unique_template_groups": 100,
+      "sha256": "4d779cdceb8557109af201a79f26ab5bd2eefc6eb1a3cd1996c7dda736ab03c9"
+    },
+    "train_20000.jsonl": {
+      "rows": 20000,
+      "labels": {
+        "account": 4000,
+        "other": 4000,
+        "product": 4000,
+        "technical": 4000,
+        "billing": 4000
+      },
+      "unique_template_groups": 100,
+      "sha256": "6bdb074bbb1472ce68f19e0743be6e3c6f170920612f978ed53fd780dcfb7d0b"
+    }
+  }
+}

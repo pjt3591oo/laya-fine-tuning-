@@ -1,0 +1,42 @@
+{
+  "seed": 20261002,
+  "synthetic": true,
+  "generation": "100 handwritten request templates x 10 shared contexts",
+  "warning": "Variants share templates; size is not independent semantic diversity. Do not randomly split variants for evaluation; group by template_group.",
+  "nested": "train_100 is a subset of train_400, which is a subset of train_1000",
+  "datasets": {
+    "train_100.jsonl": {
+      "rows": 100,
+      "labels": {
+        "billing": 20,
+        "technical": 20,
+        "other": 20,
+        "account": 20,
+        "product": 20
+      },
+      "unique_template_groups": 100
+    },
+    "train_400.jsonl": {
+      "rows": 400,
+      "labels": {
+        "other": 80,
+        "account": 80,
+        "billing": 80,
+        "technical": 80,
+        "product": 80
+      },
+      "unique_template_groups": 100
+    },
+    "train_1000.jsonl": {
+      "rows": 1000,
+      "labels": {
+        "account": 200,
+        "product": 200,
+        "other": 200,
+        "technical": 200,
+        "billing": 200
+      },
+      "unique_template_groups": 100
+    }
+  }
+}

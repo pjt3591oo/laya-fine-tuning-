@@ -1,0 +1,10 @@
+{"id": "demo-billing-09", "text": "계좌에서는 돈이 빠졌는데 주문은 미결제로 나옵니다.", "label": "billing", "synthetic": true}
+{"id": "demo-billing-10", "text": "연간 이용권을 구매했는데 환불 가능한가요?", "label": "billing", "synthetic": true}
+{"id": "demo-account-09", "text": "인증번호가 계속 만료됐다고 나와서 계정에 못 들어갑니다.", "label": "account", "synthetic": true}
+{"id": "demo-account-10", "text": "탈퇴했던 계정을 복구할 수 있나요?", "label": "account", "synthetic": true}
+{"id": "demo-technical-09", "text": "웹사이트가 계속 로딩 중이라 이용할 수 없어요.", "label": "technical", "synthetic": true}
+{"id": "demo-technical-10", "text": "설정 화면에 들어가면 앱이 멈추고 강제로 종료해야 합니다.", "label": "technical", "synthetic": true}
+{"id": "demo-product-09", "text": "해외에서도 서비스를 이용할 수 있는지 궁금합니다.", "label": "product", "synthetic": true}
+{"id": "demo-product-10", "text": "유료 플랜에는 저장 공간이 얼마나 제공되나요?", "label": "product", "synthetic": true}
+{"id": "demo-other-09", "text": "어제 이야기했던 건 확인 부탁드려요.", "label": "other", "synthetic": true}
+{"id": "demo-other-10", "text": "보도자료를 받을 수 있을까요?", "label": "other", "synthetic": true}

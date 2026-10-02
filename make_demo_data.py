@@ -70,22 +70,28 @@ def main():
     parser = argparse.ArgumentParser(description="Generate 40 training and 10 test examples")
     parser.add_argument("--overwrite", action="store_true", help="Replace existing demo data")
     args = parser.parse_args()
+
     root = Path(__file__).resolve().parent / "data"
     root.mkdir(exist_ok=True)
+
     for split in ("train", "test"):
         path = root / f"{split}.jsonl"
         if path.exists() and not args.overwrite:
             raise SystemExit(f"Refusing to overwrite {path}; use --overwrite to regenerate")
+        
     rows = {"train": [], "test": []}
+
     for label, texts in EXAMPLES.items():
         for i, text in enumerate(texts):
             split = "train" if i < 8 else "test"
             rows[split].append({"id": f"demo-{label}-{i+1:02d}", "text": text,
                                 "label": label, "synthetic": True})
+            
     for split, items in rows.items():
         with (root / f"{split}.jsonl").open("w", encoding="utf-8") as stream:
             for item in items:
                 stream.write(json.dumps(item, ensure_ascii=False) + "\n")
+                
         print(f"{split}: {len(items)} synthetic examples")
 
 if __name__ == "__main__":

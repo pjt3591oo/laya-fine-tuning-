@@ -13,10 +13,13 @@ def main():
     parser.add_argument("--model", default="convaiinnovations/laya-multilingual")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
+
     import laya
+
     agent = laya.load(args.model, device=args.device)
     questions = json.loads((ROOT / "schema.json").read_text(encoding="utf-8"))
     result = agent.predict(args.text, questions)
+    
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":

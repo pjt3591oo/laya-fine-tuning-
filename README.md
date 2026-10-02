@@ -15,7 +15,7 @@
 실제 데이터를 사용할 때는 고객/대화 단위로 학습·보정·테스트를 분리하고
 각 분류의 사례, 오탈자, 짧은 문의, 여러 의도가 섞인 문의를 확보하세요.
 
-## 실행 (PowerShell)
+## 실행
 
 ### 데이터 생성 순서
 
@@ -23,10 +23,10 @@
 데이터 파일이 없는 상태에서는 환경 설치 후 아래 세 스크립트를 순서대로 실행합니다.
 `make_scaled_data.py`는 기본 학습·테스트 파일을 읽으므로 `make_demo_data.py`가 먼저입니다.
 
-```shell
-$ uv run make_demo_data.py
-$ uv run make_scaled_data.py
-$ uv run make_large_data.py
+```bash
+uv run make_demo_data.py
+uv run make_scaled_data.py
+uv run make_large_data.py
 ```
 
 - `make_demo_data.py`: `data/train.jsonl` 40개, `data/test.jsonl` 10개 생성.
@@ -37,10 +37,10 @@ $ uv run make_large_data.py
 `--overwrite`는 해당 스크립트가 만드는 데이터 파일을 덮어씁니다.
 같은 코드와 시드로 실행하면 같은 데이터가 만들어집니다.
 
-```shell
-$ uv run make_demo_data.py --overwrite
-$ uv run make_scaled_data.py --overwrite
-$ uv run make_large_data.py --overwrite
+```bash
+uv run make_demo_data.py --overwrite
+uv run make_scaled_data.py --overwrite
+uv run make_large_data.py --overwrite
 ```
 
 ### 확장 합성 학습 데이터
@@ -70,13 +70,13 @@ $ uv run make_large_data.py --overwrite
 `--data`로 학습 데이터를, `--output-dir`로 결과 저장 폴더를 선택합니다.
 아래처럼 데이터 크기별로 폴더를 지정하면 각각의 결과를 따로 보관할 수 있습니다.
 
-```shell
-$ uv run train.py --data data/train.jsonl --output-dir models/korean-support-40 --epochs 1
-$ uv run train.py --data data/train_100.jsonl --output-dir models/korean-support-100 --epochs 1
-$ uv run train.py --data data/train_400.jsonl --output-dir models/korean-support-400 --epochs 1
-$ uv run train.py --data data/train_1000.jsonl --output-dir models/korean-support-1000 --epochs 1
-$ uv run train.py --data data/train_10000.jsonl --output-dir models/korean-support-10000 --epochs 1
-$ uv run train.py --data data/train_20000.jsonl --output-dir models/korean-support-20000 --epochs 1
+```bash
+uv run train.py --data data/train.jsonl --output-dir models/korean-support-40 --epochs 1
+uv run train.py --data data/train_100.jsonl --output-dir models/korean-support-100 --epochs 1
+uv run train.py --data data/train_400.jsonl --output-dir models/korean-support-400 --epochs 1
+uv run train.py --data data/train_1000.jsonl --output-dir models/korean-support-1000 --epochs 1
+uv run train.py --data data/train_10000.jsonl --output-dir models/korean-support-10000 --epochs 1
+uv run train.py --data data/train_20000.jsonl --output-dir models/korean-support-20000 --epochs 1
 ```
 
 지정한 폴더에는 최종 모델과 설정·토크나이저, `checkpoint_latest/`,
@@ -92,13 +92,13 @@ CUDA 실행은 측정 경계에서 GPU 작업 완료를 기다려 시간을 측�
 
 평가 결과도 `--output`으로 파일 이름을 달리 지정합니다 (`reports/`에 저장).
 
-```shell
-$ uv run evaluate.py --model ./models/base --output finetuned.json
+```bash
+uv run evaluate.py --model ./models/base --output finetuned.json
 
-$ uv run evaluate.py --model ./models/korean-support-100 --output finetuned-100.json
-$ uv run evaluate.py --model ./models/korean-support-400 --output finetuned-400.json
-$ uv run evaluate.py --model ./models/korean-support-1000 --output finetuned-1000.json
-$ uv run predict.py "두 번 결제됐어요. 한 건 취소해주세요." --model ./models/korean-support-1000
+uv run evaluate.py --model ./models/korean-support-100 --output finetuned-100.json
+uv run evaluate.py --model ./models/korean-support-400 --output finetuned-400.json
+uv run evaluate.py --model ./models/korean-support-1000 --output finetuned-1000.json
+uv run predict.py "두 번 결제됐어요. 한 건 취소해주세요." --model ./models/korean-support-1000
 ```
 
 확장 데이터의 학습은 아직 실행하지 않았습니다.
@@ -106,19 +106,19 @@ $ uv run predict.py "두 번 결제됐어요. 한 건 취소해주세요." --mod
 Python과 uv가 설치되어 있는 환경에서 프로젝트 폴더에서 실행합니다.
 첫 모델 실행은 Hugging Face 모델 다운로드가 필요합니다.
 
-```shell
+```bash
 
-$ uv run -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+uv run -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 
 # 데이터가 없을 때 생성 (이미 있으면 이 세 줄은 생략)
-$ uv run make_demo_data.py
-$ uv run make_scaled_data.py
-$ uv run make_large_data.py
+uv run make_demo_data.py
+uv run make_scaled_data.py
+uv run make_large_data.py
 
-$ uv run evaluate.py --output baseline.json
-$ uv run train.py --epochs 1
-$ uv run evaluate.py --model ./models/korean-support --output finetuned.json
-$ uv run predict.py "두 번 결제됐어요. 한 건 취소해주세요." --model ./models/korean-support
+uv run evaluate.py --output baseline.json
+uv run train.py --epochs 1
+uv run evaluate.py --model ./models/korean-support --output finetuned.json
+uv run predict.py "두 번 결제됐어요. 한 건 취소해주세요." --model ./models/korean-support
 ```
 
 학습은 공식 RLCD + 교차 엔트로피 루프를 호출해 전체 파라미터를 업데이트합니다.
@@ -126,6 +126,60 @@ micro-batch 1, gradient accumulation 8, encoder/head gradient checkpointing을 �
 16GB GPU에서 시작하기 위한 구성으로 실제 메모리와 CUDA 호환성은 실행 검증이 필요합니다.
 메모리 부족 시 다른 GPU 프로그램을 닫고 입력 길이와 학습 구성을 조정하세요.
 `reports`의 정확도·macro F1·오분류를 전후 비교합니다. 작은 합성 데이터에서 성능 개선을 보장하지 않습니다.
+
+## System One 호환 API 서버
+
+FastAPI 서버는 TypeSafe의 [공식 HTTP 스펙](https://docs.typesafe.ai/api)에 맞춰
+`POST /v1/systemone`의 `state`, `model`, `questions`를 로컬 Laya 모델로 처리합니다.
+`choice`, `score`, `noul`을 지원하며 응답은 `model`, `answers`, `usage`입니다.
+Jev 서버를 호출하는 것이 아니라 학습된 Laya를 실행합니다.
+
+```bash
+uv sync --cache-dir .uv-cache
+export LAYA_MODEL="models/korean-support-20000"
+export LAYA_DEVICE="cuda" # GPU가 없으면 cpu
+export SYSTEM_ONE_API_KEY="your-local-key"
+uv run uvicorn server:app --host 127.0.0.1 --port 8000
+```
+
+기본 모델 경로는 `models/korean-support-20000`, 기본 기기는 `cuda`입니다.
+`LAYA_MODEL`은 다른 학습 폴더나 Hugging Face 모델 ID로 지정할 수 있습니다.
+`LAYA_MODEL_NAME`으로 공개 모델 이름을 지정합니다 (기본 `laya-korean-support`).
+요청의 `jev-latest`, `jev-preview`는 이 로컬 모델의 호환 별칭입니다.
+응답에는 실제 로컬 모델 이름을 반환합니다. 요청마다 모델을 바꾸지는 않습니다.
+`SYSTEM_ONE_API_KEY`를 설정하면 Bearer 인증을 검사하고, 생략하면 인증 없이 실행합니다.
+
+다른 Bash 터미널에서 고객 문의 분류를 요청합니다.
+
+```bash
+curl --fail-with-body http://127.0.0.1:8000/v1/systemone  \
+ -H 'Authorization: Bearer your-local-key'  \
+ -H 'Content-Type: application/json; charset=utf-8'  \
+ --data-raw '{
+    "model": "jev-latest",
+    "state": "두 번 결제됐어요. 한 건 취소해주세요.",
+    "questions": {
+      "category": {
+        "type": "choice",
+        "instructions": "고객 문의의 주된 요청을 가장 적합한 유형 하나로 분류하세요.",
+        "criteria": {
+          "billing": "결제·환불",
+          "account": "계정·로그인",
+          "technical": "기술 문제",
+          "product": "상품·서비스",
+          "other": "기타"
+        }
+      }
+    }
+  }'
+```
+
+`GET /v1/models`에서 공개 모델 이름을 조회하고, `/health`에서 준비 상태를 확인합니다.
+Swagger 문서는 `http://127.0.0.1:8000/docs`에 있습니다.
+잘못된 요청은 422, 잘못된 인증은 401을 반환합니다.
+모델은 서버 시작 시 한 번 로드하며 추론은 하나씩 처리합니다. 워커마다 모델 메모리가 필요합니다.
+`usage`의 Laya 입력 잘림 진단도 반환하므로 긴 입력은 `truncated`를 확인하세요.
+TypeSafe의 호스팅 서비스와 같은 추론 결과·컨텍스트 한도·과금·요청 제한을 제공하는 것은 아닙니다.
 
 ## Todo
 

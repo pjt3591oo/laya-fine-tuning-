@@ -66,7 +66,7 @@ def main():
 
         if item is None:
             raise ValueError(f"Option markers lost for {row['id']}")
-        print(item)
+        # print(item)
         items.append(item)
 
     if len(items) < 10:

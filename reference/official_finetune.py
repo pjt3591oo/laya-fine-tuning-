@@ -295,6 +295,7 @@ def train(args, model_dir, items_path, device):
             logits = logits.float()
             k = mask.sum(-1, keepdim=True).float()
 
+            # RLCD: 모델 출력 주변의 확률 분포를 탐색
             eps = torch.randn((4,) + logits.shape, device=device) * sigma * mask
             eps = (eps - eps.sum(-1, keepdim=True) / k) * mask
             noisy_logits = logits.detach().unsqueeze(0) + eps
@@ -312,11 +313,14 @@ def train(args, model_dir, items_path, device):
                 advantage = reward - reward.mean(0, keepdim=True)
                 advantage = advantage / (advantage.std() + 1e-6)
 
+            # RLCD: 보상을 이용한 policy gradient loss 계산
             logp = -(((noisy_logits - logits.unsqueeze(0)) ** 2) * mask).sum(-1) / (2 * sigma**2)
             loss_rl = -(advantage * logp).mean()
             loss_ce = -(
                 target * torch.log_softmax(logits.masked_fill(~mask, -1e4), -1)
             ).sum(-1).mean()
+            
+            # RLCD: RL loss와 교차 엔트로피를 합쳐 가중치 업데이트
             loss = (loss_rl + loss_ce + 0.0 * activation.sum()) / args.grad_accum
             loss.backward()
 

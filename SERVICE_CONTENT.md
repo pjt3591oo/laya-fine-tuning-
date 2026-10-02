@@ -192,6 +192,227 @@ gold = {
 }
 ```
 
+### 학습에 전달하는 캐시는 어떻게 만들어질까?
+
+학습 과정을 이해하려면 원본 문의가 모델 입력과 정답으로 어떻게 바뀌는지 살펴볼 필요가 있다. `gold`는 loss 계산에 사용할 정답 분포이고, `build_training_item()`은 문의·질문·선택지를 토큰화한 입력과 이 정답을 하나의 딕셔너리로 묶는다. 이 단계에서는 모델을 실행하거나 가중치를 업데이트하지 않는다.
+
+`train.py`에서는 JSONL의 각 행을 읽어 다음 과정을 반복한다. 아래는 캐시 생성 부분을 발췌한 코드다.
+
+```python
+labels = list(schema["criteria"])
+items = []
+texts = set()
+
+for line in args.data.read_text(encoding="utf-8").splitlines():
+    row = json.loads(line)
+
+    if row["label"] not in labels or not row["text"].strip():
+        raise ValueError(f"Invalid training row: {row['id']}")
+    if row["text"] in texts:
+        raise ValueError("Duplicate training text")
+
+    texts.add(row["text"])
+    gold = {
+        "probabilities": {
+            label: float(label == row["label"])
+            for label in labels
+        }
+    }
+    item = upstream.build_training_item(
+        tokenizer, cfg, row["text"], schema, gold
+    )
+
+    if item is None:
+        raise ValueError(f"Option markers lost for {row['id']}")
+    items.append(item)
+
+# 실제 코드에서는 데이터 수와 테스트 문장 중복도 검사한 뒤 저장한다.
+args.output_dir.mkdir(parents=True, exist_ok=True)
+cache = args.output_dir / "train_items.pt"
+torch.save(items, cache)
+```
+
+`float(label == row["label"])`은 정답 라벨이면 `1.0`, 나머지면 `0.0`을 만든다. `items`는 이렇게 만든 학습용 딕셔너리들의 Python 리스트이고, `train_items.pt`는 이 리스트를 `torch.save()`로 직렬화한 파일이다. `.pt`라는 확장자지만 이 파일에는 토큰 ID와 정답 등의 전처리 데이터가 들어 있다. 모델 가중치는 별도의 `model.safetensors`에 저장한다.
+
+현재 `train.py`는 실행할 때마다 원본 데이터를 전처리하고 `train_items.pt`를 다시 저장한 뒤, 그 경로를 `upstream.train()`에 전달한다. 기존 캐시가 있으면 자동으로 재사용하는 구조는 아니다. 이 파일은 전처리 단계와 학습 단계 사이에서 데이터를 전달하는 역할을 한다.
+
+### 학습용 item에 들어 있는 다섯 가지 필드
+
+다음은 정답이 `other`인 항목을 출력한 예다. 긴 `ids` 배열은 일부만 표시했다.
+
+```python
+{
+    "ids": [2, 6241, 2872, ...],
+    "markers": [103, 132, 159, 183, 208],
+    "qtype": 0,
+    "target": [0.0, 0.0, 0.0, 0.0, 1.0],
+    "label": 4,
+}
+```
+
+| 필드 | 내용 | 학습에서의 역할 |
+|---|---|---|
+| `ids` | 문의·질문 지시문·선택지 설명 등을 입력 형식에 맞춰 구성한 토큰 ID 목록 | 모델의 입력 시퀀스 |
+| `markers` | 입력 시퀀스에서 각 선택지 마커의 위치 인덱스 | 모델이 선택지별 점수를 계산할 위치 지정 |
+| `qtype` | 질문 유형을 나타내는 정수. 이 예제의 `0`은 `choice` | 모델과 RLCD 계산에 질문 유형 전달 |
+| `target` | 선택지 순서로 정렬한 정답 확률 분포 | 교차 엔트로피와 RLCD 보상 계산의 기준 |
+| `label` | `target`에서 가장 큰 값의 인덱스 | 정답 인덱스 기록. 현재 학습 loss에는 `target`을 사용 |
+
+`markers`의 `103`은 토큰 ID가 아니라 `ids[103]` 위치를 가리키는 0부터 시작하는 인덱스다. 정확히는 각 선택지 설명 바로 앞에 삽입한 `[MASK]` 토큰의 위치다. 이후 값들도 각각 두 번째부터 다섯 번째 선택지 앞의 `[MASK]` 위치를 가리킨다.
+
+### 요청 페이로드가 모델 입력으로 바뀌는 과정
+
+추론할 때도 같은 방식으로 입력을 구성한다. HTTP 요청의 JSON 자체를 그대로 모델에 넣는 것이 아니라, `state`와 각 질문을 다음과 같이 연결한다.
+
+| 요청 필드 | 모델 입력에서의 표현 |
+|---|---|
+| `questions.category.type` | `choice question:`이라는 질문 유형 표현과 `qtype` 코드 |
+| `questions.category.instructions` | 분류 지시문 |
+| `questions.category.criteria` | 선택지별 `[MASK] 이름: 설명` |
+| `state` | 고객 문의 본문 |
+
+`model`은 서버가 사용할 모델을 선택하는 값이고, `category`는 요청의 질문과 응답을 연결하는 이름이다. 둘은 아래 토큰 시퀀스에 포함되지 않는다. 질문이 여러 개면 각 질문에 대해 같은 `state`와 해당 질문의 지시문·선택지를 조합한다.
+
+입력은 다음 순서로 구성된다. `[CLS]`, `[SEP]`, `[MASK]`는 특수 토큰을 설명하기 위한 표기다. 아래 줄바꿈은 구조를 보기 쉽게 표시한 것이며, 실제로는 하나의 토큰 시퀀스를 구성한다.
+
+```text
+[CLS] choice question: 분류 지시문 [SEP]
+[MASK] billing: 결제·환불 설명
+[MASK] account: 계정·로그인 설명
+[MASK] technical: 기술 문제 설명
+[MASK] product: 상품·서비스 설명
+[MASK] other: 기타 설명
+[SEP] 고객 문의 본문 [SEP]
+```
+
+예를 들어 요청의 `state`가 “두 번 결제됐어요. 한 건 취소해주세요.”이면 마지막의 고객 문의 본문 자리에 들어간다. 각 선택지는 요청의 `criteria`에서 가져온 이름과 설명으로 채워진다. 이렇게 구성한 내용을 토큰 ID로 바꾼 `ids`와 마커 위치 등의 텐서를 모델에 전달한다.
+
+학습과 추론의 입력 구성은 연결되어 있지만, 추론 요청에는 정답인 `gold`나 `target`이 없다. 학습에서는 같은 형식의 입력에 정답 분포를 별도로 준비해 loss를 계산한다.
+
+### 마커를 어떻게 만들고, 왜 사용해야 할까?
+
+선택지를 추가할 때 `[MASK]`를 맨 앞에 붙이고, 추가 직전의 입력 길이를 위치로 기록한다. 아래는 시퀀스 구성 로직을 축약한 코드다.
+
+```python
+option_ids = [tokenizer.mask_token_id] + option_tokens
+markers.append(len(ids))
+ids.extend(option_ids)
+```
+
+선택지 이름과 설명은 여러 토큰으로 나뉘고, 선택지마다 토큰 수가 다르다. 모델의 encoder가 반환하는 것도 선택지별 점수 다섯 개가 아니라 입력의 각 토큰에 대한 hidden state다. 따라서 선택지마다 어느 위치의 벡터를 가져와 점수를 계산할지 정해 두어야 한다. 이 모델 구조에서는 각 선택지 앞의 `[MASK]`가 그 역할을 한다.
+
+hidden state는 해당 토큰이 입력 문맥을 반영한 벡터 표현이다. 모델은 전체 입력을 처리한 뒤, `markers`가 가리키는 위치의 hidden state를 모아 선택지별 점수 계산에 사용한다. 마커가 문의와 선택지의 적합도를 직접 계산하는 것은 아니다. 지정한 위치의 표현을 이용해 적합도를 학습하는 것은 모델이다.
+
+```text
+전체 입력의 토큰별 hidden state
+    → billing 앞 [MASK]의 벡터 ──→ billing 점수
+    → account 앞 [MASK]의 벡터 ──→ account 점수
+    → technical 앞 [MASK]의 벡터 → technical 점수
+    → product 앞 [MASK]의 벡터 ──→ product 점수
+    → other 앞 [MASK]의 벡터 ────→ other 점수
+    → 선택지별 logits를 확률로 변환
+```
+
+즉, `[SEP]`는 질문·선택지·문의 같은 입력 구간의 경계를 구분하고, 선택지 앞의 `[MASK]`와 그 위치를 기록한 `markers`는 선택지별 점수를 읽어올 자리를 지정한다. 이 구조는 선택지 설명의 길이가 달라도 선택지마다 하나의 기준 위치를 확보할 수 있게 한다. 선택지 순서를 유지하면 추출한 벡터와 logits, 정답 `target`도 같은 순서로 대응한다.
+
+여기서 `[MASK]`를 쓴다고 해서 마스크 자리에 들어갈 단어를 예측하는 학습을 수행하는 것은 아니다. 이 학습 루프의 정답은 `target`의 선택지 확률 분포다. 또한 토큰 시퀀스의 `[MASK]`와 배치 텐서의 `mask`는 서로 다른 개념이다. 후자는 실제 선택지와 패딩 선택지를 구분하는 불리언 배열이다.
+
+마커 위치는 지시문·선택지 설명·토크나이저·길이 제한 설정에 따라 달라진다. 문의 본문은 선택지 뒤에 붙이므로, 같은 질문과 설정에서는 문의 길이가 달라져도 마커 위치는 같다.
+
+`choice`의 정답 분포는 `criteria`의 키 순서에 맞춰 생성한다.
+
+```python
+keys = list(criteria.keys())
+target = [gold_question["probabilities"].get(key, 0.0) for key in keys]
+```
+
+현재 스키마의 순서는 다음과 같다.
+
+```text
+인덱스:  0          1          2           3          4
+라벨:    billing    account    technical   product    other
+target:  0.0        0.0        0.0         0.0        1.0
+```
+
+따라서 위 예시의 `label=4`는 `other`를 뜻한다. 정답이 `billing`이면 `target`은 `[1.0, 0.0, 0.0, 0.0, 0.0]`, `label`은 `0`이 된다. 선택지 순서가 입력·마커·정답 분포에서 일치해야 올바른 선택지에 대해 loss를 계산할 수 있다.
+
+`build_training_item()`은 정답 분포의 합이 1이 되도록 정규화하고, `target.index(max(target))`로 `label`을 구한다. 또 `build_sequence()`로 토큰 시퀀스와 마커 위치를 만든 뒤 선택지 수와 마커 수가 일치하는지 검사한다. 일치하지 않으면 `None`을 반환하며, 호출한 `train.py`가 오류를 발생시킨다.
+
+### 캐시를 읽은 다음에는 무엇이 일어날까?
+
+공식 학습 함수는 캐시를 CPU로 읽는다.
+
+```python
+all_items = torch.load(items_path, map_location="cpu", weights_only=False)
+```
+
+이 리스트를 학습용과 확률 보정용으로 분리한 다음, 학습용 항목을 micro-batch 단위로 가져온다. `collate()`는 각 항목의 리스트를 텐서로 변환하고, 길이가 다른 입력을 배치의 최대 길이에 맞춰 패딩한다.
+
+```python
+ids, attention, positions, mask, target, qtype = collate(
+    chunk, tokenizer.pad_token_id
+)
+```
+
+배치 크기를 `B`, 배치 내 최대 입력 길이를 `L`, 최대 선택지 수를 `K`라고 하면 텐서 구조는 다음과 같다.
+
+| 텐서 | 크기 | 의미 |
+|---|---|---|
+| `ids` | `[B, L]` | 패딩된 토큰 ID |
+| `attention` | `[B, L]` | 실제 입력은 1, 패딩은 0 |
+| `positions` | `[B, K]` | 선택지 마커 위치 |
+| `mask` | `[B, K]` | 유효한 선택지는 True, 패딩 선택지는 False |
+| `target` | `[B, K]` | 선택지별 정답 확률 |
+| `qtype` | `[B]` | 각 항목의 질문 유형 |
+
+이번 분류 작업은 선택지가 항상 다섯 개이므로 `K=5`다. 예를 들어 micro-batch가 1이면 `target`의 크기는 `[1, 5]`가 된다. `label` 필드는 `collate()`의 반환값에 포함되지 않는다.
+
+### 모델 출력에서 loss와 가중치 업데이트까지
+
+텐서를 학습 기기로 옮긴 뒤 모델의 forward를 실행한다. 정답 `target`은 모델의 입력으로 전달하지 않고, 출력에 대한 학습 기준으로 사용한다.
+
+```python
+logits, activation = model(ids, attention, positions, mask, qtype)
+
+loss_ce = -(
+    target * torch.log_softmax(logits.masked_fill(~mask, -1e4), dim=-1)
+).sum(dim=-1).mean()
+```
+
+`logits`는 각 선택지에 대한 정규화 전 점수다. `log_softmax()`는 이를 로그 확률로 바꾸고, `target`이 정답 선택지의 로그 확률을 골라내도록 한다. `billing`이 정답이면 항목 하나의 교차 엔트로피는 `-log(P(billing))`이므로, 모델이 정답에 높은 확률을 줄수록 loss가 작아진다.
+
+실제 코드에서는 같은 `target`을 RLCD의 보상 계산에도 사용한다. 교차 엔트로피와 RLCD loss를 합쳐 역전파하고, gradient accumulation 설정에 따라 optimizer를 실행한다. 아래는 핵심 흐름을 축약한 코드다.
+
+```python
+loss = (loss_rl + loss_ce) / args.grad_accum
+loss.backward()
+
+# 지정한 micro-batch 수를 채우거나 마지막 배치에 도달하면 실행
+torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+optimizer.step()
+scheduler.step()
+optimizer.zero_grad(set_to_none=True)
+```
+
+기본 `grad_accum=8`이면 각 micro-batch에서 gradient를 누적하고, 여덟 개마다 가중치를 업데이트한다. 마지막에 남은 배치도 업데이트한다. 학습에서는 최종 라벨을 반환하는 `predict()` 결과 대신, gradient를 계산할 수 있는 logits를 사용한다.
+
+전체 데이터 흐름을 연결하면 다음과 같다.
+
+```text
+JSONL의 문의와 정답 라벨
+    → gold: 라벨 이름별 정답 확률
+    → build_training_item(): 토큰·마커·유형·정답 배열 구성
+    → items 리스트를 train_items.pt로 저장
+    → 학습 함수에서 읽고 학습/보정 데이터 분리
+    → collate(): 패딩과 텐서 변환
+    → model forward: 선택지별 logits 계산
+    → target을 기준으로 CE loss와 RLCD loss 계산
+    → backward: gradient 누적
+    → optimizer.step(): 모델 가중치 업데이트
+```
+
+### 학습 설정과 결과 파일
+
 현재 코드의 학습 설정은 다음과 같다.
 
 | 항목 | 설정 |
